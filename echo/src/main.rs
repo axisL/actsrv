@@ -1,24 +1,26 @@
 use tokio::net::{TcpListener, TcpStream};
-use mini_redis::{Connection, Frame};
-
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use std::env;
 
 #[tokio::main]
 async fn main() {
-    let listener = TcpListener::bind("127.0.0.1:6123").await.unwrap();
-    println!("Hello, world!");
+    let addr = env::args()
+        .nth(1)
+        .unwrap_or_else(|| "127.0.0.1:6123".to_string());
+    let listener = TcpListener::bind(&addr).await.unwrap();
+    println!("listen on {:?}", addr);
     loop {
-        let (socket,_) = listener.accept().await.unwrap();
+        let (socket, _) = listener.accept().await.unwrap();
         tokio::spawn(async move {
             process(socket).await;
         });
     }
 }
 
-async fn process(socket: TcpStream) {
-    let mut connection = Connection::new(socket);
-    if let Some(frame)= connection.read_frame().await.unwrap(){
-        println!("receive: {:?}",frame);
-        let response:Frame = frame;
-        connection.write_frame(&response).await.unwrap();
-    }
+async fn process(mut socket: TcpStream) {
+    let mut buffer = Vec::new();
+    socket.read_to_end(&mut buffer).await.unwrap();
+    println!("receive {:?}",buffer);
+    socket.write(&buffer).await.unwrap();
+    println!("write {:?}",buffer);
 }
