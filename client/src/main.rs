@@ -87,7 +87,7 @@ async fn write() -> Result<(), Box<dyn Error>> {
         // Try to write data, this may still fail with `WouldBlock`
         // if the readiness event is a false positive.
         match stream.try_write(b"hello world") {
-            Ok(n) => {
+            Ok(_n) => {
                 break;// break or this will send all the time
             }
             Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {
@@ -106,10 +106,10 @@ async fn read_write() -> Result<(), Box<dyn Error>> {
     let mut socket = TcpStream::connect("127.0.0.1:6123").await?;
     let (r, w) = socket.split();
     let stream = FramedRead::new(r, BytesCodec::new());
-    let sink = FramedWrite::new(w, BytesCodec::new());
-    let st = stream.filter_map(|i| match i {
+    let _sink = FramedWrite::new(w, BytesCodec::new());
+    let _st = stream.filter_map(|i| match i {
         Ok(i) => future::ready(Some(i.freeze())),
-        Err(e) => {
+        Err(_e) => {
             future::ready(None)
         }
     });
