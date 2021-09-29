@@ -18,9 +18,20 @@ async fn main() {
 }
 
 async fn process(mut socket: TcpStream) {
-    let mut buffer = Vec::new();
-    socket.read_to_end(&mut buffer).await.unwrap();
-    println!("receive {:?}",buffer);
-    socket.write(&buffer).await.unwrap();
-    println!("write {:?}",buffer);
+    let mut buffer = vec![0;1024];
+    loop{
+        let n = socket.read(&mut buffer).await.expect("read data from socket failed");
+        if n ==0 {
+            return;
+        }
+        let data =&buffer[0..n];
+        println!("receive {:?}",data);
+        socket.write_all(data).await.expect("write data to socket failed")
+    }
+    // socket.readable().await;
+
+    // socket.read_to_end(&mut buffer).await.unwrap();
+    // println!("receive {:?}",buffer);
+    // socket.write(&buffer).await.unwrap();
+    // println!("write {:?}",buffer);
 }
